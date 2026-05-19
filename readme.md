@@ -5,7 +5,14 @@ A small demo that uses [`octokit`](https://github.com/octokit/octokit.js) to:
 1. Open a pull request using an **installation access token**.
 2. Open another pull request and post a comment using a **user-to-server token** obtained through the **OAuth Device Flow**.
 
+## Demo
+
 https://github.com/user-attachments/assets/49820459-742d-47c7-9b2a-49654c4f1146
+
+example pull requests
+
+1. server-to-server (installation access) token: https://github.com/gr2m/sandbox/pull/318
+2. user-to-server: https://github.com/gr2m/sandbox/pull/319
 
 ## 1. Register a GitHub App
 
