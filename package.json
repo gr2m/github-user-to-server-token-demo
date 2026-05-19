@@ -11,5 +11,8 @@
   "dependencies": {
     "@octokit/auth-oauth-device": "^8.0.0",
     "octokit": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

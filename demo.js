@@ -1,3 +1,5 @@
+// @ts-check
+
 import { App, Octokit, RequestError } from "octokit";
 import { createOAuthDeviceAuth } from "@octokit/auth-oauth-device";
 
@@ -36,6 +38,12 @@ async function getInstallationOctokit() {
   return app.getInstallationOctokit(installation.id);
 }
 
+/**
+ * Create a branch off the default branch, add a file, and open a pull request.
+ *
+ * @param {InstanceType<typeof Octokit>} octokit
+ * @param {string} label - free-form label used in branch/file/PR titles to distinguish runs.
+ */
 async function createPullRequest(octokit, label) {
   const { data: repository } = await octokit.request(
     "GET /repos/{owner}/{repo}",
@@ -87,19 +95,47 @@ async function createPullRequest(octokit, label) {
   return pullRequest;
 }
 
-async function commentOnPullRequest(octokit, pullRequest, body) {
+/**
+ * @param {InstanceType<typeof Octokit>} octokit
+ * @param {string} label
+ */
+async function createIssue(octokit, label) {
+  const { data: issue } = await octokit.request(
+    "POST /repos/{owner}/{repo}/issues",
+    {
+      owner,
+      repo,
+      title: `octokit demo issue (${label})`,
+      body: `This issue was opened by the octokit demo using a **${label}** token.`,
+    }
+  );
+  return issue;
+}
+
+/**
+ * @param {InstanceType<typeof Octokit>} octokit
+ * @param {number} issueOrPullRequestNumber
+ * @param {string} body
+ */
+async function commentOnIssue(octokit, issueOrPullRequestNumber, body) {
   const { data: comment } = await octokit.request(
     "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
     {
       owner,
       repo,
-      issue_number: pullRequest.number,
+      issue_number: issueOrPullRequestNumber,
       body,
     }
   );
   return comment;
 }
 
+/**
+ * Run the OAuth Device Flow against the GitHub App's client id and return the
+ * resulting user-to-server token.
+ *
+ * @param {string} clientId
+ */
 async function getUserToken(clientId) {
   const auth = createOAuthDeviceAuth({
     clientType: "github-app",
@@ -120,33 +156,48 @@ async function getUserToken(clientId) {
   return token;
 }
 
+/**
+ * @param {string} prefix
+ * @param {unknown} error
+ */
 function logRequestError(prefix, error) {
   if (error instanceof RequestError) {
+    const data = /** @type {{ errors?: unknown } | undefined} */ (
+      error.response?.data
+    );
     console.error(
       `${prefix}: ${error.status} ${error.message}` +
-        (error.response?.data?.errors
-          ? `\n  ${JSON.stringify(error.response.data.errors)}`
-          : "")
+        (data?.errors ? `\n  ${JSON.stringify(data.errors)}` : "")
     );
+  } else if (error instanceof Error) {
+    console.error(`${prefix}: ${error.message}`);
   } else {
-    console.error(`${prefix}: ${error.message ?? error}`);
+    console.error(`${prefix}: ${String(error)}`);
   }
 }
 
 try {
   const appInfo = await getAppInfo();
+  if (!appInfo) {
+    throw new Error("Failed to fetch GitHub App info (GET /app returned null).");
+  }
   console.log(`Authenticated as GitHub App: ${appInfo.slug} (id: ${appInfo.id})`);
 
   const installationOctokit = await getInstallationOctokit();
 
-  console.log("\n[1/2] Creating pull request with installation access token...");
+  console.log("\n[1/2] Using installation access token...");
   const installationPR = await createPullRequest(
     installationOctokit,
     "installation"
   );
-  console.log(`  Created: ${installationPR.html_url}`);
+  console.log(`  Pull request: ${installationPR.html_url}`);
+  const installationIssue = await createIssue(installationOctokit, "installation");
+  console.log(`  Issue:        ${installationIssue.html_url}`);
 
   console.log("\n[2/2] Authorizing user via OAuth Device Flow...");
+  if (!appInfo.client_id) {
+    throw new Error("GitHub App is missing a client_id — cannot start Device Flow.");
+  }
   const userToken = await getUserToken(appInfo.client_id);
   console.log("  Received user-to-server token.");
 
@@ -156,17 +207,24 @@ try {
   } = await userOctokit.request("GET /user");
   console.log(`  Authenticated as user: ${login}`);
 
-  console.log("\n      Creating pull request with user-to-server token...");
+  console.log("\n      Using user-to-server token...");
   const userPR = await createPullRequest(userOctokit, "user-to-server");
-  console.log(`  Created: ${userPR.html_url}`);
-
-  console.log("      Commenting on the pull request...");
-  const comment = await commentOnPullRequest(
+  console.log(`  Pull request: ${userPR.html_url}`);
+  const prComment = await commentOnIssue(
     userOctokit,
-    userPR,
+    userPR.number,
     `:wave: Hello from @${login} via a user-to-server token.`
   );
-  console.log(`  Created: ${comment.html_url}`);
+  console.log(`  PR comment:   ${prComment.html_url}`);
+
+  const userIssue = await createIssue(userOctokit, "user-to-server");
+  console.log(`  Issue:        ${userIssue.html_url}`);
+  const issueComment = await commentOnIssue(
+    userOctokit,
+    userIssue.number,
+    `:wave: Hello from @${login} via a user-to-server token.`
+  );
+  console.log(`  Issue comment: ${issueComment.html_url}`);
 
   console.log("\nDone.");
 } catch (error) {

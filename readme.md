@@ -2,8 +2,8 @@
 
 A small demo that uses [`octokit`](https://github.com/octokit/octokit.js) to:
 
-1. Open a pull request using an **installation access token**.
-2. Open another pull request and post a comment using a **user-to-server token** obtained through the **OAuth Device Flow**.
+1. Open a pull request and an issue using an **installation access token**.
+2. Open another pull request and issue, and post a comment on each, using a **user-to-server token** obtained through the **OAuth Device Flow**.
 
 ## Demo
 
@@ -22,6 +22,7 @@ Create a new GitHub App at <https://github.com/settings/apps/new> (or in your or
 - **Repository permissions**
   - **Pull requests**: Read and write
   - **Contents**: Read and write (needed to push the branch the PR is opened from)
+  - **Issues**: Read and write
 - **Device Flow** — Enable "Enable Device Flow" under *Identifying and authorizing users*.
 
 After creating the app:
@@ -87,8 +88,8 @@ node --env-file=.env demo.js octocat/hello-world
 
 The script will:
 
-1. Authenticate as the GitHub App, find the installation on the given repository, and open a pull request using an installation access token.
-2. Start the OAuth Device Flow. You will be prompted to open a URL such as <https://github.com/login/device> and enter a one-time user code. Once you authorize the app, the demo continues and opens a second pull request, then posts a comment on it, both using the user-to-server token.
+1. Authenticate as the GitHub App, find the installation on the given repository, and open a pull request and an issue using an installation access token.
+2. Start the OAuth Device Flow. You will be prompted to open a URL such as <https://github.com/login/device> and enter a one-time user code. Once you authorize the app, the demo continues and — using the user-to-server token — opens a second pull request and posts a comment on it, then opens an issue and posts a comment on it.
 
 ## License
 
