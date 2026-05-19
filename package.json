@@ -1,0 +1,15 @@
+{
+  "name": "github-user-to-server-token-demo",
+  "version": "1.0.0",
+  "description": "Demo of creating a pull request and comment with a GitHub App installation token and a user-to-server token via OAuth Device Flow.",
+  "type": "module",
+  "main": "demo.js",
+  "scripts": {
+    "start": "node demo.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@octokit/auth-oauth-device": "^8.0.0",
+    "octokit": "^5.0.0"
+  }
+}
