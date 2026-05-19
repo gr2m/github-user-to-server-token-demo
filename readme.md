@@ -5,6 +5,8 @@ A small demo that uses [`octokit`](https://github.com/octokit/octokit.js) to:
 1. Open a pull request using an **installation access token**.
 2. Open another pull request and post a comment using a **user-to-server token** obtained through the **OAuth Device Flow**.
 
+https://github.com/user-attachments/assets/49820459-742d-47c7-9b2a-49654c4f1146
+
 ## 1. Register a GitHub App
 
 Create a new GitHub App at <https://github.com/settings/apps/new> (or in your organization settings) with the following configuration:
